@@ -1,29 +1,32 @@
-import pytest
-import sys
+import re
+import os
 
 def main():
     max_score = 1000
     points_per_assert = 50
-    
-    # Run pytest and capture the output
-    result = pytest.main(["--maxfail=20", "--disable-warnings"])
-    
-    # Parse the number of tests passed
-    passed = result.testscollected - result.testsfailed - result.testspassed
-    
-    # Calculate the score
-    score = min(passed * points_per_assert, max_score)
+
+    log_file = os.getenv('LOG_FILE', 'result.log')
+
+    # Parse the pytest output to count the number of tests passed and failed
+    with open(log_file, 'r') as f:
+        log_content = f.read()
+
+    passed_tests = len(re.findall(r'\.\.\.\.', log_content))
+    failed_tests = len(re.findall(r'\[FAILED\]', log_content))
+
+    total_tests = passed_tests + failed_tests
+    score = min(passed_tests * points_per_assert, max_score)
 
     # Print the summary table
     print("Test runner summary")
-    print(" ┌────────────────────┬─────────────┬─────────────┐")
-    print(" │ Test Runner Name   │ Test Score  │ Max Score   │")
-    print(" ├────────────────────┼─────────────┼─────────────┤")
-    print(f"│ test_session       │ {score}     │ {max_score} │")
-    print(" ├────────────────────┼─────────────┼─────────────┤")
-    print(f"│ Total:             │ {score}     │ {max_score} │")
-    print(" └────────────────────┴─────────────┴─────────────┘")
-    print(f"🏆 Grand total tests passed: {passed}/{result.testscollected}")
+    print("┌────────────────────┬─────────────┬─────────────┐")
+    print("│ Test Runner Name   │ Test Score  │ Max Score   │")
+    print("├────────────────────┼─────────────┼─────────────┤")
+    print(f"│ test_session      │ {score:4}   │{max_score:4}│")
+    print("├────────────────────┼─────────────┼─────────────┤")
+    print(f"│ Total:            │ {score:4}   │{max_score:4}│")
+    print("└────────────────────┴─────────────┴─────────────┘")
+    print(f"🏆 Grand total tests passed: {passed_tests}/{total_tests}")
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
